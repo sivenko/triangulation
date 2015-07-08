@@ -1,4 +1,5 @@
 from operator import attrgetter
+from functools import total_ordering
 
 class Vertex:
     def __init__(self, x, y):
@@ -62,8 +63,9 @@ class Vertex:
     def leftmost_triangle(self):
         pass
 
+@total_ordering
 class Vector:
-    def __init__(self, start_vertex, end_vertex):
+    def __init__(self, start_vertex=None, end_vertex=None):
         ''' (Vector, Vertex, Vertex) -> (Vector)
 
         Returns a vector instancse, identified by start and end vertex
@@ -71,9 +73,36 @@ class Vector:
         >>> [vec.x, vec.y]
         [1, 0]
         '''
-        self.x = end_vertex.x - start_vertex.x
-        self.y = end_vertex.y - start_vertex.y
+        if ( start_vertex != None and end_vertex != None):
+            self.x = end_vertex.x - start_vertex.x
+            self.y = end_vertex.y - start_vertex.y
+        else:
+            self.x = None
+            self.y = None 
+        self.start = start_vertex
+        self.end = end_vertex
 
+    def __eq__(self,other):
+        if self.cross_product(other):
+            return True
+        else:
+            return False
+
+    def __lt__(self, other):
+        return self.is_clockwise(other)
+
+    def __str__(self):
+            return '({0},{1})'.format(self.x, self.y)
+
+    def left_orthogonal(self):
+        ''' (Vector) -> (Vector)
+        
+        returns vector that is orthogonal to self, and is counter clockwise to self
+        '''
+        end_x = self.start.x - self.y
+        end_y = self.start.y + self.x
+        return Vector(self.start, Vertex(end_x, end_y))
+    
     def cross_product(self, vector):
         '''(Vector, Vector) -> (number)
 
@@ -93,23 +122,42 @@ class Vector:
         '''
         return self.x * vector.y - self.y * vector.x
 
-    def is_clockwise(self, vector):
+    def is_clockwise(self, vec):
         '''(Vector, Vector) -> (bool)
 
-        Returns true if the second vector in clockwise position relativy to the first one
+        Returns true if the self vector in clockwise position relativy to the vec vector
         >>> vec1 = Vector(Vertex(0,0), Vertex(1,0))
         >>> vec2 = Vector(Vertex(0,0), Vertex(0,1))
         >>> vec1.is_clockwise(vec2)
-        False
+        True
         >>> vec2.is_clockwise(vec1)
-        True
+        False
         >>> vec1.is_clockwise(vec1)
-        True
+        False
         '''
-        if self.cross_product(vector)  > 0:
-            return False
-        else:
+        if self.cross_product(vec) > 0:
             return True
+        else:
+            return False
+
+    def is_cclockwise(self, vec):
+        '''(Vector, Vector) -> (bool)
+
+        Returns true if the self vector in counter clockwise position relativly to the vec vector
+        otherwise returns False.
+        Note: if vectors are colinear also returns false
+        '''
+        if self.cross_product(vec) < 0:
+            return True
+        else:
+            return False
+
+    def cos_angle(self, vector):
+        dot = self.x * vector.x + self.y * vector.y
+        return dot/(self.mod() + self.mod())
+    
+    def mod(self):
+        return self.x*self.x + self.y*self.y
     
         
 if __name__ == '__main__':
